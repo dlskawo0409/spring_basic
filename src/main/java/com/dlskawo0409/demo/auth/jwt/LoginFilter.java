@@ -4,6 +4,7 @@ package com.dlskawo0409.demo.auth.jwt;
 import com.dlskawo0409.demo.auth.domain.LoginRequest;
 import com.dlskawo0409.demo.auth.domain.RefreshEntity;
 import com.dlskawo0409.demo.auth.domain.RefreshRepository;
+import com.dlskawo0409.demo.member.dto.request.CustomMemberDetails;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.Cookie;
@@ -130,14 +131,15 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         return cookie;
     }
 
-    private void addRefreshEntity(String email, String refresh, Long expiredMs) {
+    private void addRefreshEntity(String username, String refresh, Long expiredMs) {
 
         Date date = new Date(System.currentTimeMillis() + expiredMs);
 
-        RefreshEntity refreshEntity = new RefreshEntity();
-        refreshEntity.setEmail(email);
-        refreshEntity.setRefresh(refresh);
-        refreshEntity.setExpiration(date.toString());
+        RefreshEntity refreshEntity = RefreshEntity.builder()
+                .username(username)
+                .refresh(refresh)
+                .expiration(date.toString())
+                .build();
 
         refreshRepository.save(refreshEntity);
     }

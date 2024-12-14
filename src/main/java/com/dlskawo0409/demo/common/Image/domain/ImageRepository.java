@@ -1,13 +1,9 @@
 package com.dlskawo0409.demo.common.Image.domain;
 
 
-import java.util.List;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ImageRepository{
-    Image findByImageId(Long imageId);
-    boolean save(Image image);
-    boolean delete(Long imageId);
-    boolean update(Image image);
+public interface ImageRepository extends JpaRepository<Image, Long> {
 //    List<ImageResponseDTO> findByReferenceId(@Param("referenceId") String referenceId, @Param("imageType") ImageType imageType);
 
 }

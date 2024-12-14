@@ -2,6 +2,7 @@ package com.dlskawo0409.demo.common.Image.domain;
 
 import com.dlskawo0409.demo.common.domain.BasicEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,19 +12,21 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
+@Table(name = "image")
+@Entity
 @Builder
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Image extends BasicEntity {
-    @Schema(hidden = true)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long imageId;
-
-    @Schema(hidden = true)
+    @Column(nullable = false)
     private String imageUrl;
-
+    @Column(nullable = true)
     private ImageType imageType;
-
+    @Column(nullable = true)
     private String referenceId;
 
     public static String makeImageName(MultipartFile multipartFile){

@@ -55,7 +55,7 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
                 .group("Member") // Swagger UI 그룹 이름
                 .pathsToMatch("/members/**","/login") // /member 경로와 관련된 API만 포함
-                .packagesToScan("com.ssafy.thezip.member") // 특정 패키지 스캔
+                .packagesToScan("com.dlskawo0409.demo.member") // 특정 패키지 스캔
                 .build();
     }
 
@@ -64,7 +64,7 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
                 .group("All")
                 .pathsToMatch("/**","/login")
-                .packagesToScan("com.ssafy.thezip")
+                .packagesToScan("com.dlskawo0409.demo")
                 .build();
     }
 

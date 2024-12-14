@@ -1,12 +1,14 @@
 package com.dlskawo0409.demo.member.domain;
 
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface MemberRepository{
-    Member findById(Long id);
+import java.util.Optional;
+
+
+public interface MemberRepository extends JpaRepository<Member, Long> {
+
     Member  findByUsername(String Username);
     boolean existsByUsername(String username);
     boolean existsByNickname(String nickname);
-    void save(Member member);
-    boolean update(Member member);
+    void delete(Member member);
 }

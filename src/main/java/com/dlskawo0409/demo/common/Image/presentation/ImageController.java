@@ -3,6 +3,7 @@ package com.dlskawo0409.demo.common.Image.presentation;
 import com.dlskawo0409.demo.common.Image.application.ImageService;
 import com.dlskawo0409.demo.common.Image.domain.ImageType;
 import com.dlskawo0409.demo.common.Image.dto.request.ImageInsertDTO;
+import com.dlskawo0409.demo.common.Image.exception.ImageException;
 import com.dlskawo0409.demo.common.storage.application.StorageService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -32,7 +33,7 @@ public class ImageController {
             @PathVariable Long imageId,
             @Parameter(description = "Image Type", schema = @Schema(implementation = ImageType.class))
             @RequestParam ImageType imageType ) throws IOException {
-        return ResponseEntity.ok(imageService.getPresignedURL(imageId));
+        return ResponseEntity.ok(imageService.getPreSignedURL(imageId));
     }
 
 
@@ -42,7 +43,7 @@ public class ImageController {
                                                                   description = "multipart/form-data 형식의 이미지를 input으로 받습니다.",
                                                                   content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)
                                                           )
-                                                          @RequestPart("image") MultipartFile multipartFile) throws IOException {
+                                                          @RequestPart("image") MultipartFile multipartFile) throws Exception {
         imageService.upload(multipartFile,imageInsertDTO.getReferenceId(),imageInsertDTO.getImageType());
         return new ResponseEntity<>("이미지가 성공적으로 추가되었습니다.", HttpStatus.CREATED);
     }
@@ -55,7 +56,7 @@ public class ImageController {
 //    }
 
     @DeleteMapping("/{imageId}")
-    public ResponseEntity<?> deleteImage(@PathVariable("image-id") Long imageId){
+    public ResponseEntity<?> deleteImage(@PathVariable("image-id") Long imageId) throws ImageException.ImageBadRequestException {
         imageService.delete(imageId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

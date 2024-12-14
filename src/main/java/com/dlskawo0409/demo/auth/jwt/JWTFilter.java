@@ -2,6 +2,7 @@ package com.dlskawo0409.demo.auth.jwt;
 
 import com.dlskawo0409.demo.member.domain.Member;
 import com.dlskawo0409.demo.member.domain.Role;
+import com.dlskawo0409.demo.member.dto.request.CustomMemberDetails;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -32,7 +33,6 @@ public class JWTFilter extends OncePerRequestFilter {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) { // 쿠키 배열이 null인지 확인
             for (Cookie cookie : cookies) {
-                System.out.println(cookie.getName());
                 if (cookie.getName().equals("Authorization")) {
                     authorization = cookie.getValue();
                 }

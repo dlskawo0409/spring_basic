@@ -1,6 +1,7 @@
 package com.dlskawo0409.demo.auth.application;
 
 import com.dlskawo0409.demo.auth.jwt.JWTUtil;
+import com.dlskawo0409.demo.member.dto.request.CustomMemberDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;

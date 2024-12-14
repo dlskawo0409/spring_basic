@@ -7,10 +7,8 @@ import java.nio.file.Path;
 
 public interface StorageService {
 
-    void init();
-    void store(MultipartFile file, String fileName);
-    Path load(String filename);
-    Object loadAsResource(String fileName, String url) throws IOException;
+    String store(MultipartFile file, String fileName) throws IOException;
+    String getPreSignedUrl(String filename);
 
     //    void deleteAll();
     void deleteOne(String fileName);
