@@ -6,7 +6,6 @@ import com.dlskawo0409.demo.auth.jwt.CustomSuccessHandler;
 import com.dlskawo0409.demo.auth.jwt.JWTFilter;
 import com.dlskawo0409.demo.auth.jwt.JWTUtil;
 import com.dlskawo0409.demo.auth.jwt.LoginFilter;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -20,7 +19,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
-@RequiredArgsConstructor
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -32,7 +31,15 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomSuccessHandler customSuccessHandler;
 
+    public SecurityConfig(AuthenticationConfiguration authenticationConfiguration, JWTUtil jwtUtil, RefreshRepository refreshRepository, CorsConfigurationSource corsConfigurationSource, CustomOAuth2UserService customOAuth2UserService, CustomSuccessHandler customSuccessHandler) {
 
+        this.authenticationConfiguration = authenticationConfiguration;
+        this.jwtUtil = jwtUtil;
+        this.refreshRepository = refreshRepository;
+        this.corsConfigurationSource = corsConfigurationSource;
+        this.customOAuth2UserService = customOAuth2UserService;
+        this.customSuccessHandler = customSuccessHandler;
+    }
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -40,7 +47,6 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-
         return configuration.getAuthenticationManager();
     }
 
@@ -64,7 +70,10 @@ public class SecurityConfig {
                 .httpBasic((auth) -> auth.disable());
 
         http
-                .addFilterBefore(new JWTFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JWTFilter(jwtUtil), LoginFilter.class);
+
+
+
 
         http
                 .oauth2Login((oauth2) -> oauth2
@@ -72,6 +81,9 @@ public class SecurityConfig {
                                 .userService(customOAuth2UserService))
                         .successHandler(customSuccessHandler)
                 );
+//        http
+//                .addFilterAfter(new JWTFilter(jwtUtil), OAuth2LoginAuthenticationFilter.class);
+
 
 
         //경로별 인가 작업
@@ -99,10 +111,9 @@ public class SecurityConfig {
 
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated());
-//        http
-//                .addFilterBefore(new JWTFilter(jwtUtil), LoginFilter.class);
-//        http
-//                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, refreshRepository), UsernamePasswordAuthenticationFilter.class);
+
+        http
+                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, refreshRepository), UsernamePasswordAuthenticationFilter.class);
 
         http
                 .logout(logout -> logout

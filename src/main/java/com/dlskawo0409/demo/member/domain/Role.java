@@ -4,12 +4,13 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Arrays;
+import java.util.NoSuchElementException;
 
 public enum Role {
     ADMIN("ROLE_ADMIN", "운영자"),
     USER("ROLE_USER", "로그인 회원"),
-    GUEST("ROLE_GUEST", "손님"),
-    AGENT("ROLE_AGENT","중개인");
+    GUEST("ROLE_GUEST", "손님");
+
 
     private final String key;
     private final String title;
@@ -22,13 +23,10 @@ public enum Role {
 
     @JsonCreator
     public static Role from(String input) {
-        if (input == null || input.trim().isEmpty()) {
-            return null; // 또는 기본 값 설정
-        }
         return Arrays.stream(values())
-                .filter(role -> role.key.equalsIgnoreCase(input) || role.name().equalsIgnoreCase(input))
+                .filter(role -> role.key.equalsIgnoreCase(input))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 역할 키: " + input));
+                .orElseThrow(NoSuchElementException::new);
     }
 
     @JsonValue
@@ -36,14 +34,9 @@ public enum Role {
         return this.key;
     }
 
-    public boolean equalsKeyOrName(String input) {
-        if (input == null) {
-            return false;
-        }
-        return this.key.equalsIgnoreCase(input) || this.name().equalsIgnoreCase(input);
+    public static boolean isSameName(String input, Role role) {
+        return role.name()
+                .equalsIgnoreCase(input);
     }
-
-
-
 
 }

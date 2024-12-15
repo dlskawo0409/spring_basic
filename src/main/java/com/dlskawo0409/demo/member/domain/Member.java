@@ -34,7 +34,7 @@ public class Member implements UserDetails {
     private String password;
     @Column(nullable = false, unique = true, length = 20)
     private String nickname;
-    @Column(nullable = false)
+    @Column(name="ROLE", nullable = false)
     private Role role;
     @OneToOne( cascade = CascadeType.ALL)
 //    @OneToMany( cascade = CascadeType.ALL)

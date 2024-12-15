@@ -50,7 +50,8 @@ public class MemberService {
 
         memberRepository.save(member);
         Image profile = imageService.upload(multipartFile, String.valueOf(member.getMemberId()), ImageType.PROFILE);
-
+        member.setProfile(profile);
+        memberRepository.save(member);
         return member;
     }
 
