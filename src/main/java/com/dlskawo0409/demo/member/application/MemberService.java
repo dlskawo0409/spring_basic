@@ -4,12 +4,14 @@ package com.dlskawo0409.demo.member.application;
 import com.dlskawo0409.demo.common.Image.application.ImageService;
 import com.dlskawo0409.demo.common.Image.domain.Image;
 import com.dlskawo0409.demo.common.Image.domain.ImageType;
+import com.dlskawo0409.demo.common.Image.exception.ImageException;
 import com.dlskawo0409.demo.member.domain.Member;
 import com.dlskawo0409.demo.member.domain.MemberRepository;
 import com.dlskawo0409.demo.member.domain.Role;
 import com.dlskawo0409.demo.member.dto.request.CustomMemberDetails;
 import com.dlskawo0409.demo.member.dto.request.MemberJoinRequest;
 import com.dlskawo0409.demo.member.dto.request.MemberUpdateRequest;
+import com.dlskawo0409.demo.member.dto.response.MemberGetResponse;
 import com.dlskawo0409.demo.member.dto.response.MemberUpdateResponse;
 import com.dlskawo0409.demo.member.exception.MemberErrorCode;
 import com.dlskawo0409.demo.member.exception.MemberException;
@@ -56,8 +58,32 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Member> getMemberService(CustomMemberDetails loginMember){
-        return memberRepository.findById(loginMember.getMemberId());
+    public MemberGetResponse getMemberService(CustomMemberDetails loginMember) throws MemberException.MemberBadRequestException, ImageException.ImageBadRequestException {
+        Long memberId = loginMember.getMemberId();
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberException.MemberBadRequestException(MEMBER_NOT_FOUND));
+
+        String imageUrl;
+
+        try {
+            imageUrl = member.getProfile().getImageUrl();
+            if (!imageUrl.startsWith("http")) {
+                imageUrl = imageService.getPreSignedURL(member.getProfile().getImageId());
+            }
+        } catch (Exception e) {
+            imageUrl = "null";
+            log.warn("이미지 처리 중 오류 발생: {}", e.getMessage());
+        }
+
+        // 3. 조회된 멤버 정보로 응답 생성
+        return new MemberGetResponse(
+                member.getMemberId(),
+                member.getUsername(),
+                member.getNickname(),
+                member.getRole(),
+                imageUrl,
+                member.getCreatedAt()
+        );
     }
 
 

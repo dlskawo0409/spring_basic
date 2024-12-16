@@ -1,7 +1,9 @@
 package com.dlskawo0409.demo.member.presentation;
 
+import com.dlskawo0409.demo.common.Image.exception.ImageException;
 import com.dlskawo0409.demo.member.application.MemberService;
 import com.dlskawo0409.demo.member.dto.request.*;
+import com.dlskawo0409.demo.member.exception.MemberException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -44,7 +46,7 @@ public class MemberController {
 
     @GetMapping
     @Operation(summary = "회원 정보 확인", description = "회원 정보를 확인합니다.")
-    public ResponseEntity<?> getMemberController(@AuthenticationPrincipal CustomMemberDetails loginMember){
+    public ResponseEntity<?> getMemberController(@AuthenticationPrincipal CustomMemberDetails loginMember) throws MemberException.MemberBadRequestException, ImageException.ImageBadRequestException {
         return ResponseEntity.ok(memberService.getMemberService(loginMember));
     }
 

@@ -28,11 +28,11 @@ import java.io.IOException;
 public class ImageController {
     private final ImageService imageService;
 
-    @GetMapping("/{imageId}")
+    @GetMapping("/{imageType}/{imageId}")
     public ResponseEntity<?> getImageByImageIdController(
-            @PathVariable Long imageId,
+            @PathVariable("imageId") Long imageId,
             @Parameter(description = "Image Type", schema = @Schema(implementation = ImageType.class))
-            @RequestParam ImageType imageType ) throws IOException {
+            @PathVariable("imageType") ImageType imageType ) throws IOException {
         return ResponseEntity.ok(imageService.getPreSignedURL(imageId));
     }
 

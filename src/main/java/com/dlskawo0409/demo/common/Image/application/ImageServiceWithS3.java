@@ -65,9 +65,11 @@ public class ImageServiceWithS3 implements ImageService{
 
     @Override
     public String getPreSignedURL(Long imageId) throws ImageException.ImageBadRequestException {
-        return imageRepository.findById(imageId)
-                .orElseThrow(() -> new ImageException.ImageBadRequestException(ImageErrorCode.CANT_NOT_FIND_IMAGE))
-                .getImageUrl();
+        Image image =  imageRepository.findById(imageId)
+                .orElseThrow(() -> new ImageException.ImageBadRequestException(ImageErrorCode.CANT_NOT_FIND_IMAGE));
+
+        String imageUrl = image.getImageType().getUrl() +"/"+ image.getImageUrl();
+        return storageService.getPreSignedUrl(imageUrl);
     }
 
     @Override

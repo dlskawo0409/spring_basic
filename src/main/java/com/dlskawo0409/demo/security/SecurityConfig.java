@@ -2,10 +2,7 @@ package com.dlskawo0409.demo.security;
 
 import com.dlskawo0409.demo.auth.application.CustomOAuth2UserService;
 import com.dlskawo0409.demo.auth.domain.RefreshRepository;
-import com.dlskawo0409.demo.auth.jwt.CustomSuccessHandler;
-import com.dlskawo0409.demo.auth.jwt.JWTFilter;
-import com.dlskawo0409.demo.auth.jwt.JWTUtil;
-import com.dlskawo0409.demo.auth.jwt.LoginFilter;
+import com.dlskawo0409.demo.auth.jwt.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -17,6 +14,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 
@@ -72,7 +70,8 @@ public class SecurityConfig {
         http
                 .addFilterBefore(new JWTFilter(jwtUtil), LoginFilter.class);
 
-
+        http
+                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, refreshRepository), UsernamePasswordAuthenticationFilter.class);
 
 
         http
@@ -81,9 +80,6 @@ public class SecurityConfig {
                                 .userService(customOAuth2UserService))
                         .successHandler(customSuccessHandler)
                 );
-//        http
-//                .addFilterAfter(new JWTFilter(jwtUtil), OAuth2LoginAuthenticationFilter.class);
-
 
 
         //경로별 인가 작업
@@ -112,19 +108,18 @@ public class SecurityConfig {
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated());
 
-        http
-                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, refreshRepository), UsernamePasswordAuthenticationFilter.class);
+//        http
+//                .addFilterBefore(new CustomLogoutFilter(jwtUtil, refreshRepository), LogoutFilter.class);
 
         http
                 .logout(logout -> logout
                                 .logoutUrl("/logout") // 로그아웃 요청 URL
-//                .logoutSuccessUrl("/") // 로그아웃 성공 후 리다이렉트 URL
-//                .invalidateHttpSession(true) // 세션 무효화
+                .logoutSuccessUrl("/") // 로그아웃 성공 후 리다이렉트 URL
+                .invalidateHttpSession(true) // 세션 무효화
                                 .deleteCookies("JSESSIONID") // 쿠키 삭제
                                 .deleteCookies("Authorization")
                 );
-//        http
-//                .addFilterBefore(new CustomLogoutFilter(jwtUtil, refreshRepository), LogoutFilter.class);
+
         //세션 설정
         http
                 .sessionManagement((session) -> session

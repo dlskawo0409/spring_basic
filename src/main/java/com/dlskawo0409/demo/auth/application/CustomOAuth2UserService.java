@@ -61,7 +61,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .imageUrl(oAuth2Response.getProfile())
                     .referenceId(String.valueOf(member.getMemberId())).build();
             imageRepository.save(profile);
-
+            member.setProfile(profile);
+            memberRepository.save(member);
 
             return new CustomOAuth2User(member);
         }
