@@ -1,12 +1,14 @@
 package com.dlskawo0409.demo.member.domain;
 
+import com.dlskawo0409.demo.common.util.AbstractCodedEnumConverter;
+import com.dlskawo0409.demo.common.util.CodedEnum;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
-public enum Role {
+public enum Role implements CodedEnum<String> {
     ADMIN("ROLE_ADMIN", "운영자"),
     USER("ROLE_USER", "로그인 회원"),
     GUEST("ROLE_GUEST", "손님");
@@ -37,6 +39,13 @@ public enum Role {
     public static boolean isSameName(String input, Role role) {
         return role.name()
                 .equalsIgnoreCase(input);
+    }
+
+    @jakarta.persistence.Converter(autoApply = true)
+    static class Converter extends AbstractCodedEnumConverter<Role, String> {
+        public Converter() {
+            super(Role.class);
+        }
     }
 
 }
