@@ -11,10 +11,10 @@ public class RefreshToken {
 
 	@Id
 	private String refreshToken;
-	private Long userId;
+	private Long memberId;
 
-	public RefreshToken(String refreshToken, Long userId) {
+	public RefreshToken(String refreshToken, Long memberId) {
 		this.refreshToken = refreshToken;
-		this.userId = userId;
+		this.memberId = memberId;
 	}
 }
