@@ -15,12 +15,18 @@ import java.util.Date;
 @Component
 public class JWTUtil {
 
-    private SecretKey secretKey;
+    private final SecretKey secretKey;
     private final Long expiredTime;
-
-    public JWTUtil(@Value("${spring.jwt.secret}")String secret, @Value("${spring.jwt.access-token-expire}") Long expiredTime) {
+    private final String accessTokenName;
+    private final String oauthTokenName;
+    public JWTUtil(@Value("${spring.jwt.secret}")String secret,
+                   @Value("${spring.jwt.access-token-expire}") Long expiredTime,
+                   @Value("${spring.jwt.access-token-name}") String accessTokenName,
+                   @Value("${spring.jwt.oauth-token-name}") String oauthTokenName) {
         this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
         this.expiredTime = expiredTime;
+        this.accessTokenName = accessTokenName;
+        this.oauthTokenName = oauthTokenName;
     }
 
     public String getUsername(String token) {
@@ -56,6 +62,14 @@ public class JWTUtil {
                 .expiration(new Date(System.currentTimeMillis() + expiredTime))
                 .signWith(secretKey)
                 .compact();
+    }
+
+    public String createAccessJwt(String username, String role, Long memberId){
+        return createJwt(accessTokenName, username, role,memberId);
+    };
+
+    public String createOauthJwt(String username, String role, Long memberId){
+        return createJwt(oauthTokenName, username, role, memberId);
     }
 
 }

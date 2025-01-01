@@ -15,8 +15,10 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,13 +29,14 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class JWTController {
-	private JWTUtil jwtUtil;
+	private final JWTUtil jwtUtil;
 //	private RefreshRepository refreshRepository;
 	private final RedisRefreshTokenService redisRefreshTokenService;
-
-
+	@Value("${spring.jwt.access-token-name}") String accessTokenName;
+	@Value("${spring.jwt.refresh-token-name}") String refreshTokenName;
+	@Value("${spring.jwt.oauth-token-name}") String oauthTokenName;
 	@PostMapping("/reissue")
 	public ResponseEntity<?> reissue(HttpServletRequest request, HttpServletResponse response) throws MemberException.MemberBadRequestException, AuthException.AuthBadRequestException {
 
@@ -41,7 +44,7 @@ public class JWTController {
 		String refresh = null;
 		Cookie[] cookies = request.getCookies();
 		for (Cookie cookie : cookies) {
-			if (cookie.getName().equals("refresh")) {
+			if (cookie.getName().equals(refreshTokenName)) {
 				refresh = cookie.getValue();
 			}
 		}
@@ -93,8 +96,8 @@ public class JWTController {
 		AccessAndRefreshToken accessAndRefreshToken = redisRefreshTokenService.getAccessAndRefreshToken(refresh);
 
 		//response
-		response.setHeader("access", accessAndRefreshToken.accessToken());
-		response.addCookie(createCookie("refresh", accessAndRefreshToken.refreshToken()));
+		response.setHeader(accessTokenName, accessAndRefreshToken.accessToken());
+		response.addCookie(createCookie(refreshTokenName, accessAndRefreshToken.refreshToken()));
 
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
@@ -104,15 +107,12 @@ public class JWTController {
 		String authorization = null;
 		Cookie[] cookies = request.getCookies();
 		for (Cookie cookie : cookies) {
-			System.out.println(cookie);
-			if (cookie.getName().equals("Authorization")) {
-
+			if (cookie.getName().equals(oauthTokenName)) {
 				authorization = cookie.getValue();
 			}
 		}
 
 		if (authorization == null) {
-
 			//response status code
 			return new ResponseEntity<>("authorization token null", HttpStatus.BAD_REQUEST);
 		}
@@ -125,25 +125,24 @@ public class JWTController {
 			//response status code
 			return new ResponseEntity<>("authorization token expired", HttpStatus.BAD_REQUEST);
 		}
-
 		// 토큰이 refresh인지 확인 (발급시 페이로드에 명시)
 		String category = jwtUtil.getCategory(authorization);
 
-		if (!category.equals("access")) {
-
+		if (!category.equals(oauthTokenName)) {
 			//response status code
 			return new ResponseEntity<>("invalid authorization token", HttpStatus.BAD_REQUEST);
 		}
+
 
 		String username = jwtUtil.getUsername(authorization);
 		String role = jwtUtil.getRole(authorization).getKey();
 		Long memberId = jwtUtil.getMemberId(authorization);
 
 		//make new JWT
-		String newAccess = jwtUtil.createJwt("access", username, role, memberId);
+		String newAccess = jwtUtil.createAccessJwt( username, role, memberId);
 
 		//response
-		response.setHeader("access", newAccess);
+		response.setHeader(accessTokenName, newAccess);
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 

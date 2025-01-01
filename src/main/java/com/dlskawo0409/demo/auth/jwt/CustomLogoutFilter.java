@@ -18,15 +18,21 @@ public class CustomLogoutFilter extends GenericFilterBean {
     private final JWTUtil jwtUtil;
 //    private final RefreshRepository refreshRepository;
     private final RedisRefreshTokenService redisRefreshTokenService;
-
+    private final String refreshTokenName;
+    private final String oauthTokenName;
 //    public CustomLogoutFilter(JWTUtil jwtUtil, RefreshRepository refreshRepository) {
 //        this.jwtUtil = jwtUtil;
 //        this.refreshRepository = refreshRepository;
 //    }
 
-    public CustomLogoutFilter(JWTUtil jwtUtil, RedisRefreshTokenService redisRefreshTokenService){
+    public CustomLogoutFilter(JWTUtil jwtUtil,
+                              RedisRefreshTokenService redisRefreshTokenService,
+                              String refreshTokenName,
+                              String oauthTokenName){
         this.jwtUtil = jwtUtil;
         this.redisRefreshTokenService = redisRefreshTokenService;
+        this.refreshTokenName = refreshTokenName;
+        this.oauthTokenName = oauthTokenName;
     }
 
     @Override
@@ -40,7 +46,6 @@ public class CustomLogoutFilter extends GenericFilterBean {
         //path and method verify
         String requestUri = request.getRequestURI();
         if (!requestUri.matches("^\\/logout$")) {
-            System.out.println("logout");
             filterChain.doFilter(request, response);
             return;
         }
@@ -56,10 +61,10 @@ public class CustomLogoutFilter extends GenericFilterBean {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) { // 쿠키 배열이 null인지 확인
             for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("Authorization")) {
+                if (cookie.getName().equals(oauthTokenName)) {
                     authorization = cookie;
                 }
-                if(cookie.getName().equals("refresh")){
+                if(cookie.getName().equals(refreshTokenName)){
                     refresh = cookie;
                 }
                 if(cookie.getName().equals("JSESSIONID")){
@@ -70,13 +75,16 @@ public class CustomLogoutFilter extends GenericFilterBean {
 
         if(authorization != null){
             authorization.setMaxAge(0);
+            response.addCookie(authorization);
         }
         if(jsessionId != null){
             jsessionId.setMaxAge(0);
+            response.addCookie(jsessionId);
         }
         if(refresh != null){
             redisRefreshTokenService.deleteRefreshToken(refresh.getValue());
             refresh.setMaxAge(0);
+            response.addCookie(refresh);
         }
 
     }

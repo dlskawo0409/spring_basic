@@ -21,6 +21,7 @@ import java.util.Iterator;
 public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JWTUtil jwtUtil;
+    @Value("${spring.jwt.oauth-token-name}") String oauthTokenName;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -36,9 +37,9 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String role = auth.getAuthority();
         Long memberId = customUserDetails.getMemberId();
 
-        String token = jwtUtil.createJwt("access", username, role, memberId);
+        String token = jwtUtil.createOauthJwt(username, role, memberId);
 
-        response.addCookie(createCookie("Authorization", token));
+        response.addCookie(createCookie(oauthTokenName, token));
         response.sendRedirect("http://localhost:3000/");
     }
 

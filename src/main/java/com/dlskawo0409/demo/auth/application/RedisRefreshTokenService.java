@@ -61,7 +61,7 @@ public class RedisRefreshTokenService {
 
 	public AccessAndRefreshToken getAccessAndRefreshToken(final String refreshToken) throws MemberException.MemberBadRequestException, AuthException.AuthBadRequestException {
 		Member member = getMemberByRefreshToken(refreshToken);
-		String newAccessToken = jwtUtil.createJwt("access", member.getUsername(), member.getRole().getKey(), member.getMemberId());
+		String newAccessToken = jwtUtil.createAccessJwt(member.getUsername(), member.getRole().getKey(), member.getMemberId());
         String newRefreshToken = generateRefreshToken(member.getMemberId());
 
 		deleteRefreshToken(refreshToken);

@@ -9,7 +9,9 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,36 +20,22 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class JWTFilter extends OncePerRequestFilter {
 
     private final JWTUtil jwtUtil;
-
+    private final String accessTokenName;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         // 헤더에서 access키에 담긴 토큰을 꺼냄
-        String accessToken = request.getHeader("access");
-
+        String accessToken = request.getHeader(accessTokenName);
         // 쿠키에서 oauth2 토큰 꺼냄
-        String authorization = null;
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) { // 쿠키 배열이 null인지 확인
-            for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("Authorization")) {
-                    authorization = cookie.getValue();
-                }
-            }
-        }
 
         // 토큰이 없다면 다음 필터로 넘김
-        if (accessToken == null && authorization == null) {
+        if (accessToken == null) {
             filterChain.doFilter(request, response);
             return;
-        }
-
-        if(accessToken == null){
-            accessToken = authorization;
         }
 
         // 토큰 만료 여부 확인, 만료시 다음 필터로 넘기지 않음
@@ -58,18 +46,18 @@ public class JWTFilter extends OncePerRequestFilter {
             //response body
             PrintWriter writer = response.getWriter();
             writer.print("access token expired");
-            System.out.println("access expired");
             //response status code
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }catch(Exception e){
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
+        System.out.println("not expired");
 
         // 토큰이 access인지 확인 (발급시 페이로드에 명시)
         String category = jwtUtil.getCategory(accessToken);
 
-        if (!category.equals("access")) {
+        if (!category.equals(accessTokenName) ) {
 
             //response body
             PrintWriter writer = response.getWriter();

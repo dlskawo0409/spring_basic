@@ -27,13 +27,13 @@ public class AuthService {
             );
 
             // 인증 성공 시 JWT 토큰 생성 및 반환
-            String category = "user"; // 예시로 사용, 필요에 따라 실제 역할을 지정
+//            String category = "user"; // 예시로 사용, 필요에 따라 실제 역할을 지정
             CustomMemberDetails userDetails = (CustomMemberDetails) authentication.getPrincipal();
             Long memberId = userDetails.getMember().getMemberId(); // member_id 접근
             log.debug(String.valueOf(memberId));
             String role = authentication.getAuthorities().iterator().next().getAuthority();
 
-            return jwtUtil.createJwt(category, username, role, memberId);
+            return jwtUtil.createAccessJwt( username, role, memberId);
         } catch (AuthenticationException e) {
             throw new RuntimeException("로그인 실패: 잘못된 ID 또는 비밀번호입니다.", e);
         }

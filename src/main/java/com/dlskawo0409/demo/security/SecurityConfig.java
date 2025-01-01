@@ -5,6 +5,7 @@ import com.dlskawo0409.demo.auth.application.RedisRefreshTokenService;
 import com.dlskawo0409.demo.auth.domain.RefreshRepository;
 import com.dlskawo0409.demo.auth.jwt.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -34,6 +35,9 @@ public class SecurityConfig {
 
     private final RedisRefreshTokenService redisRefreshTokenService;
 
+    @Value("${spring.jwt.access-token-name}") String accessTokenName;
+    @Value("${spring.jwt.refresh-token-name}") String refreshTokenName;
+    @Value("${spring.jwt.oauth-token-name}") String oauthTokenName;
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
@@ -65,12 +69,13 @@ public class SecurityConfig {
                 .httpBasic((auth) -> auth.disable());
 
         http
-                .addFilterBefore(new JWTFilter(jwtUtil), LoginFilter.class);
+                .addFilterBefore(new JWTFilter(jwtUtil, accessTokenName), LoginFilter.class);
 
 //        http
 //                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, refreshRepository), UsernamePasswordAuthenticationFilter.class);
         http
-                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, redisRefreshTokenService), UsernamePasswordAuthenticationFilter.class);
+                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, redisRefreshTokenService,accessTokenName, refreshTokenName)
+                        , UsernamePasswordAuthenticationFilter.class);
 
 
         http
@@ -90,7 +95,8 @@ public class SecurityConfig {
                                 "/swagger-resources/**",
                                 "/v3/api-docs/**",
                                 "/logout",
-                                "/reissue"
+                                "/reissue",
+                                "/oauth2"
 
                         ).permitAll()
 
@@ -109,7 +115,10 @@ public class SecurityConfig {
                         .anyRequest().authenticated());
 
         http
-                .addFilterBefore(new CustomLogoutFilter(jwtUtil, redisRefreshTokenService), LogoutFilter.class);
+                .addFilterBefore(new CustomLogoutFilter(jwtUtil,
+                        redisRefreshTokenService,
+                        refreshTokenName,
+                        oauthTokenName), LogoutFilter.class);
 
 //        http
 //                .logout(logout -> logout

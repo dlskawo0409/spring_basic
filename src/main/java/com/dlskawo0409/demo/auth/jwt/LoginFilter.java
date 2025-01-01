@@ -32,7 +32,8 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 	private final JWTUtil jwtUtil;
 	// private final RefreshRepository refreshRepository;
 	private final RedisRefreshTokenService redisRefreshTokenService;
-
+	private final String accessTokenName;
+    private final String refreshTokenName;
 //	public LoginFilter(AuthenticationManager authenticationManager, JWTUtil jwtUtil,
 //	 	RefreshRepository refreshRepository) {
 //	 	super(authenticationManager);
@@ -41,10 +42,14 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 //	}
 
 	public LoginFilter(AuthenticationManager authenticationManager, JWTUtil jwtUtil,
-                       RedisRefreshTokenService redisRefreshTokenService) {
+                       RedisRefreshTokenService redisRefreshTokenService,
+					   String accessTokenName,
+					   String refreshTokenName) {
 		super(authenticationManager);
 		this.jwtUtil = jwtUtil;
 		this.redisRefreshTokenService = redisRefreshTokenService;
+		this.accessTokenName = accessTokenName;
+		this.refreshTokenName = refreshTokenName;
     }
 
 
@@ -99,7 +104,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 		String role = auth.getAuthority();
 
 		//토큰 생성
-		String access = jwtUtil.createJwt("access", username, role, memberId);
+		String access = jwtUtil.createAccessJwt( username, role, memberId);
 		// String refresh = jwtUtil.createJwt("refresh", username, role, 86400000L, memberId);
 
 		//Refresh 토큰 저장
@@ -108,8 +113,8 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 		// redis 버전
 		String refreshToken = redisRefreshTokenService.generateRefreshToken(memberId);
 		//응답 설정
-		response.setHeader("access", access);
-		response.addCookie(createCookie("refresh", refreshToken));
+		response.setHeader(accessTokenName, access);
+		response.addCookie(createCookie(refreshTokenName, refreshToken));
 		response.setStatus(HttpStatus.OK.value());
 	}
 
