@@ -26,7 +26,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 public class SecurityConfig {
     private final AuthenticationConfiguration authenticationConfiguration;
     private final JWTUtil jwtUtil;
-    private final RefreshRepository refreshRepository;
+//    private final RefreshRepository refreshRepository;
     private final CorsConfigurationSource corsConfigurationSource;
 
     private final CustomOAuth2UserService customOAuth2UserService;
@@ -108,17 +108,17 @@ public class SecurityConfig {
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated());
 
-//        http
-//                .addFilterBefore(new CustomLogoutFilter(jwtUtil, refreshRepository), LogoutFilter.class);
-
         http
-                .logout(logout -> logout
-                                .logoutUrl("/logout") // 로그아웃 요청 URL
-                .logoutSuccessUrl("/") // 로그아웃 성공 후 리다이렉트 URL
-                .invalidateHttpSession(true) // 세션 무효화
-                                .deleteCookies("JSESSIONID") // 쿠키 삭제
-                                .deleteCookies("Authorization")
-                );
+                .addFilterBefore(new CustomLogoutFilter(jwtUtil, redisRefreshTokenService), LogoutFilter.class);
+
+//        http
+//                .logout(logout -> logout
+//                                .logoutUrl("/logout") // 로그아웃 요청 URL
+//                .logoutSuccessUrl("/") // 로그아웃 성공 후 리다이렉트 URL
+//                .invalidateHttpSession(true) // 세션 무효화
+//                                .deleteCookies("JSESSIONID") // 쿠키 삭제
+//                                .deleteCookies("Authorization")
+//                );
 
         //세션 설정
         http

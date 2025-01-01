@@ -1,6 +1,6 @@
 package com.dlskawo0409.demo.auth.jwt;
 
-import com.dlskawo0409.demo.auth.domain.RefreshRepository;
+import com.dlskawo0409.demo.auth.application.RedisRefreshTokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
@@ -11,16 +11,22 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.filter.GenericFilterBean;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class CustomLogoutFilter extends GenericFilterBean {
 
     private final JWTUtil jwtUtil;
-    private final RefreshRepository refreshRepository;
+//    private final RefreshRepository refreshRepository;
+    private final RedisRefreshTokenService redisRefreshTokenService;
 
-    public CustomLogoutFilter(JWTUtil jwtUtil, RefreshRepository refreshRepository) {
+//    public CustomLogoutFilter(JWTUtil jwtUtil, RefreshRepository refreshRepository) {
+//        this.jwtUtil = jwtUtil;
+//        this.refreshRepository = refreshRepository;
+//    }
 
+    public CustomLogoutFilter(JWTUtil jwtUtil, RedisRefreshTokenService redisRefreshTokenService){
         this.jwtUtil = jwtUtil;
-        this.refreshRepository = refreshRepository;
+        this.redisRefreshTokenService = redisRefreshTokenService;
     }
 
     @Override
@@ -40,70 +46,38 @@ public class CustomLogoutFilter extends GenericFilterBean {
         }
         String requestMethod = request.getMethod();
         if (!requestMethod.equals("POST")) {
-
             filterChain.doFilter(request, response);
             return;
         }
 
-        String refresh = null;
-        String authorization = null;
+        Cookie refresh = null;
+        Cookie authorization = null;
+        Cookie jsessionId = null;
         Cookie[] cookies = request.getCookies();
         if (cookies != null) { // 쿠키 배열이 null인지 확인
             for (Cookie cookie : cookies) {
-                System.out.println(cookie.getName());
                 if (cookie.getName().equals("Authorization")) {
-                    authorization = cookie.getValue();
+                    authorization = cookie;
+                }
+                if(cookie.getName().equals("refresh")){
+                    refresh = cookie;
+                }
+                if(cookie.getName().equals("JSESSIONID")){
+                    jsessionId = cookie;
                 }
             }
         }
 
+        if(authorization != null){
+            authorization.setMaxAge(0);
+        }
+        if(jsessionId != null){
+            jsessionId.setMaxAge(0);
+        }
+        if(refresh != null){
+            redisRefreshTokenService.deleteRefreshToken(refresh.getValue());
+            refresh.setMaxAge(0);
+        }
 
-
-//        //refresh null check
-//        if (refresh == null) {
-//
-//            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-//            return;
-//        }
-//
-//        //expired check
-//        try {
-//            jwtUtil.isExpired(refresh);
-//        } catch (ExpiredJwtException e) {
-//
-//            //response status code
-//            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-//            return;
-//        }
-//
-//        // 토큰이 refresh인지 확인 (발급시 페이로드에 명시)
-//        String category = jwtUtil.getCategory(refresh);
-//        if (!category.equals("refresh")) {
-//
-//            //response status code
-//            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-//            return;
-//        }
-//
-//        //DB에 저장되어 있는지 확인
-//        Boolean isExist = refreshRepository.existsByRefresh(refresh);
-//        if (!isExist) {
-//
-//            //response status code
-//            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-//            return;
-//        }
-//
-//        //로그아웃 진행
-//        //Refresh 토큰 DB에서 제거
-//        refreshRepository.deleteByRefresh(refresh);
-//
-//        //Refresh 토큰 Cookie 값 0
-//        Cookie cookie = new Cookie("refresh", null);
-//        cookie.setMaxAge(0);
-//        cookie.setPath("/");
-//
-//        response.addCookie(cookie);
-//        response.setStatus(HttpServletResponse.SC_OK);
     }
 }

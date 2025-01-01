@@ -55,8 +55,7 @@ public class RedisRefreshTokenService {
 		return refreshToken;
 	}
 
-	protected void deleteRefreshToken(String refreshToken){
-		System.out.println(refreshToken);
+	public void deleteRefreshToken(String refreshToken){
 		refreshTokenRepository.deleteById(refreshToken);
 	}
 
