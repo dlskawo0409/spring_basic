@@ -1,8 +1,10 @@
 package com.dlskawo0409.demo.security;
 
 import com.dlskawo0409.demo.auth.application.CustomOAuth2UserService;
+import com.dlskawo0409.demo.auth.application.RedisRefreshTokenService;
 import com.dlskawo0409.demo.auth.domain.RefreshRepository;
 import com.dlskawo0409.demo.auth.jwt.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -20,6 +22,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
     private final AuthenticationConfiguration authenticationConfiguration;
     private final JWTUtil jwtUtil;
@@ -29,15 +32,9 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomSuccessHandler customSuccessHandler;
 
-    public SecurityConfig(AuthenticationConfiguration authenticationConfiguration, JWTUtil jwtUtil, RefreshRepository refreshRepository, CorsConfigurationSource corsConfigurationSource, CustomOAuth2UserService customOAuth2UserService, CustomSuccessHandler customSuccessHandler) {
+    private final RedisRefreshTokenService redisRefreshTokenService;
 
-        this.authenticationConfiguration = authenticationConfiguration;
-        this.jwtUtil = jwtUtil;
-        this.refreshRepository = refreshRepository;
-        this.corsConfigurationSource = corsConfigurationSource;
-        this.customOAuth2UserService = customOAuth2UserService;
-        this.customSuccessHandler = customSuccessHandler;
-    }
+
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -70,8 +67,10 @@ public class SecurityConfig {
         http
                 .addFilterBefore(new JWTFilter(jwtUtil), LoginFilter.class);
 
+//        http
+//                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, refreshRepository), UsernamePasswordAuthenticationFilter.class);
         http
-                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, refreshRepository), UsernamePasswordAuthenticationFilter.class);
+                .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration), jwtUtil, redisRefreshTokenService), UsernamePasswordAuthenticationFilter.class);
 
 
         http
@@ -90,7 +89,8 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-resources/**",
                                 "/v3/api-docs/**",
-                                "/logout"
+                                "/logout",
+                                "/reissue"
 
                         ).permitAll()
 

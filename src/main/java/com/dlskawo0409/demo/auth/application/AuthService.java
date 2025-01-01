@@ -3,6 +3,7 @@ package com.dlskawo0409.demo.auth.application;
 import com.dlskawo0409.demo.auth.jwt.JWTUtil;
 import com.dlskawo0409.demo.member.dto.request.CustomMemberDetails;
 import lombok.RequiredArgsConstructor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,9 +33,7 @@ public class AuthService {
             log.debug(String.valueOf(memberId));
             String role = authentication.getAuthorities().iterator().next().getAuthority();
 
-            Long expirationTime = 3600000L; // 예시로 1시간 만료 시간을 설정
-
-            return jwtUtil.createJwt(category, username, role, expirationTime, memberId);
+            return jwtUtil.createJwt(category, username, role, memberId);
         } catch (AuthenticationException e) {
             throw new RuntimeException("로그인 실패: 잘못된 ID 또는 비밀번호입니다.", e);
         }

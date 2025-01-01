@@ -3,6 +3,7 @@ package com.dlskawo0409.demo.auth.jwt;
 
 import com.dlskawo0409.demo.member.domain.Role;
 import io.jsonwebtoken.Jwts;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -15,9 +16,11 @@ import java.util.Date;
 public class JWTUtil {
 
     private SecretKey secretKey;
+    private final Long expiredTime;
 
-    public JWTUtil(@Value("${spring.jwt.secret}")String secret) {
+    public JWTUtil(@Value("${spring.jwt.secret}")String secret, @Value("${spring.jwt.access-token-expire}") Long expiredTime) {
         this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
+        this.expiredTime = expiredTime;
     }
 
     public String getUsername(String token) {
@@ -38,12 +41,11 @@ public class JWTUtil {
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getExpiration().before(new Date());
     }
     public String getCategory(String token) {
-
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("category", String.class);
     }
 
 
-    public String createJwt(String category, String username, String role, Long expiredMs, Long memberId) {
+    public String createJwt(String category, String username, String role, Long memberId) {
 
         return Jwts.builder()
                 .claim("id", memberId)
@@ -51,7 +53,7 @@ public class JWTUtil {
                 .claim("username", username)
                 .claim("role", role)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + expiredMs))
+                .expiration(new Date(System.currentTimeMillis() + expiredTime))
                 .signWith(secretKey)
                 .compact();
     }

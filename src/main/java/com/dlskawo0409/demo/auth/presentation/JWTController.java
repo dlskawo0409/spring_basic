@@ -1,11 +1,15 @@
 package com.dlskawo0409.demo.auth.presentation;
 
+import com.dlskawo0409.demo.auth.application.RedisRefreshTokenService;
 import com.dlskawo0409.demo.auth.domain.RefreshEntity;
 import com.dlskawo0409.demo.auth.domain.RefreshRepository;
 import com.dlskawo0409.demo.auth.domain.RefreshToken;
 import com.dlskawo0409.demo.auth.domain.RefreshTokenRepository;
+import com.dlskawo0409.demo.auth.dto.response.AccessAndRefreshToken;
+import com.dlskawo0409.demo.auth.exception.AuthException;
 import com.dlskawo0409.demo.auth.jwt.JWTUtil;
 
+import com.dlskawo0409.demo.member.exception.MemberException;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,19 +30,18 @@ import java.util.UUID;
 @AllArgsConstructor
 public class JWTController {
 	private JWTUtil jwtUtil;
-	private RefreshRepository refreshRepository;
-	private final RefreshTokenRepository refreshTokenRepository;
+//	private RefreshRepository refreshRepository;
+	private final RedisRefreshTokenService redisRefreshTokenService;
+
 
 	@PostMapping("/reissue")
-	public ResponseEntity<?> reissue(HttpServletRequest request, HttpServletResponse response) {
+	public ResponseEntity<?> reissue(HttpServletRequest request, HttpServletResponse response) throws MemberException.MemberBadRequestException, AuthException.AuthBadRequestException {
 
 		//get refresh token
 		String refresh = null;
 		Cookie[] cookies = request.getCookies();
 		for (Cookie cookie : cookies) {
-			System.out.println(cookie);
 			if (cookie.getName().equals("refresh")) {
-
 				refresh = cookie.getValue();
 			}
 		}
@@ -50,13 +53,13 @@ public class JWTController {
 		}
 
 		//expired check
-		try {
-			jwtUtil.isExpired(refresh);
-		} catch (ExpiredJwtException e) {
-
-			//response status code
-			return new ResponseEntity<>("refresh token expired", HttpStatus.BAD_REQUEST);
-		}
+//		try {
+//			jwtUtil.isExpired(refresh);
+//		} catch (ExpiredJwtException e) {
+//
+//			//response status code
+//			return new ResponseEntity<>("refresh token expired", HttpStatus.BAD_REQUEST);
+//		}
 
 		// 토큰이 refresh인지 확인 (발급시 페이로드에 명시)
 		// String category = jwtUtil.getCategory(refresh);
@@ -75,24 +78,23 @@ public class JWTController {
 		// 	return new ResponseEntity<>("invalid refresh token", HttpStatus.BAD_REQUEST);
 		// }
 
-		String username = jwtUtil.getUsername(refresh);
-		String role = jwtUtil.getRole(refresh).getKey();
-		Long memberId = jwtUtil.getMemberId(refresh);
+//		String username = jwtUtil.getUsername(refresh);
+//		String role = jwtUtil.getRole(refresh).getKey();
+//		Long memberId = jwtUtil.getMemberId(refresh);
 
 		//make new JWT
-		String newAccess = jwtUtil.createJwt("access", username, role, 60000000L, memberId);
+//		String newAccess = jwtUtil.createJwt("access", username, role, memberId);
 		// String newRefresh = jwtUtil.createJwt("refresh", username, role, 86400000L, memberId);
-		String newRefresh = UUID.randomUUID().toString();
 		//Refresh 토큰 저장 DB에 기존의 Refresh 토큰 삭제 후 새 Refresh 토큰 저장
 		// refreshRepository.deleteByRefresh(refresh);
 		// addRefreshEntity(username, newRefresh, 86400000L);
 
 		//redis
-		RefreshToken redis = new RefreshToken(newRefresh, memberId);
-		refreshTokenRepository.save(redis);
+		AccessAndRefreshToken accessAndRefreshToken = redisRefreshTokenService.getAccessAndRefreshToken(refresh);
+
 		//response
-		response.setHeader("access", newAccess);
-		response.addCookie(createCookie("refresh", newRefresh));
+		response.setHeader("access", accessAndRefreshToken.accessToken());
+		response.addCookie(createCookie("refresh", accessAndRefreshToken.refreshToken()));
 
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
@@ -138,17 +140,17 @@ public class JWTController {
 		Long memberId = jwtUtil.getMemberId(authorization);
 
 		//make new JWT
-		String newAccess = jwtUtil.createJwt("access", username, role, 60000000L, memberId);
+		String newAccess = jwtUtil.createJwt("access", username, role, memberId);
 
 		//response
-		response.setHeader("access", newAccess):"qqq"
+		response.setHeader("access", newAccess);
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
 	private Cookie createCookie(String key, String value) {
 
 		Cookie cookie = new Cookie(key, value);
-		cookie.setMaxAge(24 * 60 * 60);
+		cookie.setMaxAge(14440);
 		cookie.setSecure(false);
 		cookie.setPath("/");
 		cookie.setHttpOnly(true);
@@ -156,17 +158,17 @@ public class JWTController {
 		return cookie;
 	}
 
-	private void addRefreshEntity(String username, String refresh, Long expiredMs) {
-
-		Date date = new Date(System.currentTimeMillis() + expiredMs);
-
-		RefreshEntity refreshEntity = RefreshEntity.builder()
-			.username(username)
-			.refresh(refresh)
-			.expiration(date.toString())
-			.build();
-
-		refreshRepository.save(refreshEntity);
-	}
+//	private void addRefreshEntity(String username, String refresh, Long expiredMs) {
+//
+//		Date date = new Date(System.currentTimeMillis() + expiredMs);
+//
+//		RefreshEntity refreshEntity = RefreshEntity.builder()
+//			.username(username)
+//			.refresh(refresh)
+//			.expiration(date.toString())
+//			.build();
+//
+//		refreshRepository.save(refreshEntity);
+//	}
 
 }

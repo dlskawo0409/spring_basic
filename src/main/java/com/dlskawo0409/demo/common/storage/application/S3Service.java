@@ -36,7 +36,7 @@ public class S3Service implements StorageService{
         // putObject(버킷명, 파일명, 파일데이터, 메타데이터)로 S3에 객체 등록
         amazonS3.putObject(bucket, s3FileName, multipartFile.getInputStream(), objMeta);
         // 등록된 객체의 url 반환 (decoder: url 안의 한글or특수문자 깨짐 방지)
-        System.out.println(amazonS3.getUrl(bucket, s3FileName).toString());
+//        System.out.println(amazonS3.getUrl(bucket, s3FileName).toString());
         return URLDecoder.decode(amazonS3.getUrl(bucket, s3FileName).toString(), "utf-8");
     }
 

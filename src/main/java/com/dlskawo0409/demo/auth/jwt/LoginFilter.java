@@ -1,10 +1,7 @@
 package com.dlskawo0409.demo.auth.jwt;
 
+import com.dlskawo0409.demo.auth.application.RedisRefreshTokenService;
 import com.dlskawo0409.demo.auth.domain.LoginRequest;
-import com.dlskawo0409.demo.auth.domain.RefreshEntity;
-import com.dlskawo0409.demo.auth.domain.RefreshRepository;
-import com.dlskawo0409.demo.auth.domain.RefreshToken;
-import com.dlskawo0409.demo.auth.domain.RefreshTokenRepository;
 import com.dlskawo0409.demo.member.dto.request.CustomMemberDetails;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -12,9 +9,9 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
@@ -26,38 +23,30 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
 import java.util.Iterator;
-import java.util.UUID;
 
 @Slf4j
-@RequiredArgsConstructor
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
 	//    private final AuthenticationManager authenticationManager;
 	private final JWTUtil jwtUtil;
-
 	// private final RefreshRepository refreshRepository;
+	private final RedisRefreshTokenService redisRefreshTokenService;
 
-	private final RefreshTokenRepository refreshTokenRepository;
-	// public LoginFilter(AuthenticationManager authenticationManager, JWTUtil jwtUtil,
-	// 	RefreshRepository refreshRepository) {
-	// 	super(authenticationManager);
-	// 	this.jwtUtil = jwtUtil;
-	// 	this.refreshRepository = refreshRepository;
-	// }
+//	public LoginFilter(AuthenticationManager authenticationManager, JWTUtil jwtUtil,
+//	 	RefreshRepository refreshRepository) {
+//	 	super(authenticationManager);
+//	 	this.jwtUtil = jwtUtil;
+//	 	this.refreshRepository = refreshRepository;
+//	}
 
-	//    @Override
-	//    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
-	//
-	//        String username = obtainUsername(request);
-	//        String password = obtainPassword(request);
-	//
-	//
-	//        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(username, password, null);
-	//        return authenticationManager.authenticate(authToken);
-	//    }
+	public LoginFilter(AuthenticationManager authenticationManager, JWTUtil jwtUtil,
+                       RedisRefreshTokenService redisRefreshTokenService) {
+		super(authenticationManager);
+		this.jwtUtil = jwtUtil;
+		this.redisRefreshTokenService = redisRefreshTokenService;
+    }
+
 
 	@Override
 	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
@@ -110,17 +99,14 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 		String role = auth.getAuthority();
 
 		//토큰 생성
-		String access = jwtUtil.createJwt("access", username, role, 60000000L, memberId);
+		String access = jwtUtil.createJwt("access", username, role, memberId);
 		// String refresh = jwtUtil.createJwt("refresh", username, role, 86400000L, memberId);
 
 		//Refresh 토큰 저장
 		//        addRefreshEntity(username, refresh, 86400000L);
 
 		// redis 버전
-		String refreshToken = UUID.randomUUID().toString();
-		RefreshToken redis = new RefreshToken(refreshToken, customMemberDetails.getMemberId());
-		log.info("userDetails.getUser().getId() = {}", customMemberDetails.getMemberId());
-		refreshTokenRepository.save(redis);
+		String refreshToken = redisRefreshTokenService.generateRefreshToken(memberId);
 		//응답 설정
 		response.setHeader("access", access);
 		response.addCookie(createCookie("refresh", refreshToken));
@@ -137,7 +123,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 	private Cookie createCookie(String key, String value) {
 
 		Cookie cookie = new Cookie(key, value);
-		cookie.setMaxAge(24 * 60 * 60);
+		cookie.setMaxAge(14440);
 		//cookie.setSecure(true);
 		//cookie.setPath("/");
 		cookie.setHttpOnly(true);

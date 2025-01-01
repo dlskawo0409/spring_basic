@@ -29,6 +29,7 @@ public class JWTFilter extends OncePerRequestFilter {
         // 헤더에서 access키에 담긴 토큰을 꺼냄
         String accessToken = request.getHeader("access");
 
+        // 쿠키에서 oauth2 토큰 꺼냄
         String authorization = null;
         Cookie[] cookies = request.getCookies();
         if (cookies != null) { // 쿠키 배열이 null인지 확인
@@ -38,7 +39,6 @@ public class JWTFilter extends OncePerRequestFilter {
                 }
             }
         }
-
 
         // 토큰이 없다면 다음 필터로 넘김
         if (accessToken == null && authorization == null) {
@@ -58,7 +58,7 @@ public class JWTFilter extends OncePerRequestFilter {
             //response body
             PrintWriter writer = response.getWriter();
             writer.print("access token expired");
-
+            System.out.println("access expired");
             //response status code
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
